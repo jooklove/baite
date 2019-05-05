@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Chat</title>
+<!-- <link rel="stylesheet" type="text/css" href="/static/liaotian/chat.css" /> -->
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<!-- <script src="/static/liaotian/js/jquery.min.js"></script> -->
+<!-- <script src="/static/liaotian/js/flexible.js"></script> -->
+<style>
+*{
+	margin: 0;
+    padding: 0;
+}
+a{
+	text-decoration: none;
+	color: #8d8d8d;
+}
+body{	
+    width: 100%;
+}
+.header{
+	width: 100%;
+    height: 50px;
+    background: #d3d4d3;
+	position: fixed;
+	top: 0;
+	display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+.back,.tit,.right{
+	height: 100%;
+	line-height: 50px;
+}
+.back{
+	display: block;
+	font-size: 20px;
+	margin-left: 15px;
+}
+.tit{
+	text-align: center;
+	font-weight: normal;
+	font-size: 16px;
+}
+.right{
+	display: block;
+	font-size: 15px;
+	margin-right: 15px;
+}
+.message{
+	width: 100%;
+	min-height: 750px;
+	background: #e9e7e7;
+}
+.footer{
+	width: 100%;
+	height: 50px;
+	position: fixed;
+	bottom: 0;
+	background-color: #d3d4d3;
+	
+}
+#msg{
+	width: 65%;
+	height: 35px;
+	border: none;
+	font-size: 18px;
+	background: #d3d4d3;
+	position: absolute;
+	top: 8px;
+	left: 15%;
+}
+#sendBtn{
+	width: 60px;
+	height: 35px;
+	color: #fff;	
+	position: absolute;
+    text-align: center;
+    border-radius: 5px;
+    line-height: 35px;
+	top: 8px;
+    right: 5%;
+}
+</style>
+</head>
+<body>
+    <header class="header">
+        <a class="back" href="javascript:history.back()"><</a>
+        <h5 class="tit">在线聊天</h5>
+        <a href="javascript:window.opener=null;window.open('','_self');window.close();" class="right">退出</a>
+    </header>
+ 
+    <!-- 聊天内容 start-->
+    <div class="message"> </div>
+    <!-- 聊天内容 end-->
+ 
+    <!-- 底部 start-->
+    <div class="footer">
+       <!-- <img id="setbtn" src="/static/liaotian/images/hua.png" alt="" />
+        <img src="/static/liaotian/images/xiaolian.png" alt="" /> -->
+        <input type="text" id="msg" value="" maxlength="300">
+        <p style="background: rgb(17, 79, 142);" id="sendBtn">发送</p>
+    </div>
+    <!-- 底部 end-->
+</body>
+</html>
+<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://cdn.bootcss.com/layer/3.1.0/layer.js"></script>
+<script type="text/javascript">
+$(function () {
+    var uid = 666;//当前用户id
+    var token = 'abcdefg';//用户token
+ 
+    //判断浏览器是否支持WebSocket
+    var supportsWebSockets = 'WebSocket' in window || 'MozWebSocket' in window;
+    if (supportsWebSockets) {
+        //建立WebSocket连接（ip地址换成自己主机ip）
+        var ws = new WebSocket("ws://39.108.234.33:9501?uid="+uid+"&token="+token);
+        ws.onopen = function () {
+            layer.msg('服务器连接成功',{shade:0.1,icon:1,time:600});
+        };
+        ws.onerror = function () {
+            layer.msg('服务器连接失败',{shade:0.1,icon:2,time:600});
+        };
+        ws.onmessage = function (evt) {
+            var data = $.parseJSON(evt.data);
+            //错误提示
+            if(data.status != 1){
+                layer.alert(data.message,{icon:2});
+                return;
+            }
+            //消息返回
+            if (data.status==1 && data.data.message!='') {
+                var html = "";
+                if (data.data.uid == uid) {
+                    html += "<div class=\"show\"><div class=\"time\">"+data.data.post_time+"</div><div class=\"msg\"><img src=\""+data.data.head_img+"\" alt=\"\" /><p><i clas=\"msg_input\"></i>"+data.data.message+"</p></div></div>";
+                }else{
+                    html += "<div class=\"send\"><div class=\"time\">"+data.data.post_time+"</div><div class=\"msg\"><img src=\""+data.data.head_img+"\" alt=\"\" /><p><i clas=\"msg_input\"></i>"+data.data.message+"</p></div></div>";
+                }
+            }
+            $(".message").append(html);
+            setTimeout(function () {
+                ($('.message').children("div:last-child")[0]).scrollIntoView();//向上滚动
+            },100);
+        };
+        ws.onclose = function (res) {
+            
+        };
+        //按钮发送
+        $("#sendBtn").click(function () {
+            var contents = $("#msg").val().trim();
+            if(contents == null || contents == ""){
+                layer.msg('内容为空',{shade:0.1,icon:2,time:600});            
+                return false;
+            }else{
+                ws.send(contents);
+                $("#msg").val("");
+            }
+        });
+        //回车发送
+        $("#msg").keydown(function (evel) {
+            var that = $(this);
+            if (evel.keyCode == 13) {
+                evel.cancelBubble = true;
+                evel.preventDefault();
+                evel.stopPropagation();
+                var contents = that.val().trim();
+                if(contents == null || contents == ""){
+                    layer.msg('内容为空',{shade:0.1,icon:2,time:600});              
+                    return false;
+                }else{
+                    ws.send(contents);
+                    that.val("");
+                }
+            }
+        });
+    }else{
+        layer.alert("您的浏览器不支持 WebSocket!");
+    }
+});
+</script>

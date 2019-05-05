@@ -178,3 +178,7 @@ All rights reserved。
 ThinkPHP® 商标和著作权所有者为上海顶想信息科技有限公司。
 
 更多细节参阅 [LICENSE.txt](LICENSE.txt)
+
+# baite.site
+一个可自定义的导航网站，致力于让任何人都可以快速找到自己需要的网站
+
